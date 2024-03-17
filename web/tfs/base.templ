@@ -1,0 +1,15 @@
+package tf
+
+templ baseWrapper() {
+	<!DOCTYPE html>
+	<html>
+		{ children... }
+	</html>
+}
+
+templ Home() {
+	@baseWrapper() {
+		@head()
+		@body()
+	}
+}

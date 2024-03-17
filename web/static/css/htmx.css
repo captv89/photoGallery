@@ -1,0 +1,25 @@
+.htmx-indicator{
+    display:none;
+}
+
+.htmx-request .htmx-indicator{
+    display:inline;
+}
+
+.htmx-request.htmx-indicator{
+    display:inline;
+}
+
+.smooth {
+  transition: opacity 1s ease-in-out;
+}
+
+.fade-me-out.htmx-swapping {
+  opacity: 0;
+  transition: opacity 1s ease-out;
+}
+
+.fade-me-in {
+  opacity: 1;
+  transition: opacity 1s ease-out;
+}

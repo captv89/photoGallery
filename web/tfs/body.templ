@@ -1,0 +1,154 @@
+package tf
+
+import (
+	"github.com/captv89/photoGallery/model"
+	"strings"
+)
+
+templ bodyWrapper() {
+	<body class="bg-gray-800">
+		{ children... }
+	</body>
+}
+
+templ body() {
+	@bodyWrapper() {
+		@header()
+		@grid()
+		@modalWrapper()
+		@bodyScripts()
+	}
+}
+
+templ header() {
+	<header class="bg-gray-900 fixed top-0 w-full shadow-md">
+		<nav class="container mx-auto px-6 py-3">
+			<div class="flex justify-between items-center">
+				<a href="/" class="text-2xl text-white antialiased hover:font-bold">{ strings.ToUpper(siteName) } <span class="antialiased font-light">{ strings.ToUpper(artistName) } </span></a>
+				<div class="flex space-x-4">
+					<a href="https://profile.captv.ovh" class="text-gray-100">Portfolio</a>
+				</div>
+			</div>
+		</nav>
+	</header>
+}
+
+templ bodyScripts() {
+	// <script src="/assets/static/js/script.js"></script>
+}
+
+templ grid() {
+	<div id="image-container" class="grid bg-gray-800 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 p-1 mt-16">
+		<!-- Image -->
+		for _, img := range model.Thumbnails {
+			<img
+				src={ "/assets/static/photos/thumbs/" + img }
+				class="w-full lg:h-64 md:h-56 sm:h-auto object-cover"
+				alt="Image"
+				hx-get={ "/image/" + img }
+				hx-target="#modal"
+				hx-indicator="#loader"
+				hx-swap="outerHTML"
+			/>
+		}
+	</div>
+}
+
+templ modal() {
+	<div id="modal" class="smooth">
+		{ children... }
+	</div>
+}
+
+templ modalWrapper() {
+	@modal() {
+		@loader()
+	}
+}
+
+templ ModalWrapperWithImage(img, previous, next string, metadata model.Image) {
+	@modal() {
+		@loader()
+		@imgModal(img, previous, next, metadata)
+	}
+}
+
+templ loader() {
+	<span id="loader" class="htmx-indicator fixed top-0 left-0 w-full h-full flex items-center justify-center z-50 bg-black bg-opacity-50">
+		<div class="absolute inset-0 flex items-center justify-center">
+			<img src="/assets/static/imgs/grid.svg" class="w-16 h-auto" alt="Loading"/>
+		</div>
+	</span>
+}
+
+templ imgModal(img, previous, next string, metadata model.Image) {
+	<div
+		id="img-modal"
+		class="fixed inset-0 overflow-y-auto z-50 bg-black bg-opacity-50 flex justify-center items-center"
+	>
+		<div class="relative">
+			<!-- Close Button -->
+			<button
+				id="closeModal"
+				class="absolute top-4 right-4 text-gray-200 shadow-xl opacity-60 hover:opacity-100 transition-all duration-500"
+				hx-get="/"
+				hx-trigger="click, keydown[key=='Escape'] from:body"
+				hx-target="#img-modal"
+				hx-swap="delete"
+			>
+				<span class="w-6 h-6 fa-solid fa-x"></span>
+			</button>
+			<!-- Navigation Arrows -->
+			<!-- Left Arrows -->
+			<div class="absolute top-1/2 -translate-y-1/2 left-4">
+				<button
+					id="pre-img"
+					class="text-gray-200 shadow-xl opacity-60 hover:opacity-100 transition-all duration-500"
+					hx-get={ "/image/" + previous }
+					hx-trigger="click, keydown[key=='ArrowLeft'] from:body"
+					hx-target="#modal"
+					hx-indicator="#loader"
+					hx-swap="outerHTML"
+				><span class="w-8 h-10 fa-solid fa-chevron-left"></span></button>
+			</div>
+			<!-- Right Arrows -->
+			<div class="absolute top-1/2 -translate-y-1/2 right-4">
+				<button
+					id="nxt-img"
+					class="text-gray-200 shadow-xl opacity-60 hover:opacity-100 transition-all duration-500"
+					hx-get={ "/image/" + next }
+					hx-trigger="click, keydown[key=='ArrowRight'] from:body"
+					hx-target="#modal"
+					hx-indicator="#loader"
+					hx-swap="outerHTML"
+				><span class="w-8 h-10 fa-solid fa-chevron-right"></span></button>
+			</div>
+			<!-- Image -->
+			<img src={ "/assets/static/photos/fulls/" + img } alt="Image" class="max-w-full mx-auto" style="max-height: calc(100vh - 4rem);"/>
+			<!-- Info Icon -->
+			<div id="infoIcon" class="absolute bottom-4 left-4 opacity-50 hover:opacity-100 transition-all duration-500">
+				<span class="fa-solid fa-circle-info w-6 h-6 text-gray-200 cursor-pointer"></span>
+			</div>
+			<!-- Metadata -->
+			<div id="metadata" class="absolute bottom-4 left-4 text-white bg-black bg-opacity-30 rounded-lg px-4 py-2 transition-opacity duration-300 opacity-30 hover:opacity-100 hidden transition-all duration-500">
+				<p class="mb-1"><span class="font-bold"><i class="fa-solid fa-building"></i> Make:</span> { metadata.Make } </p>
+				<p class="mb-1"><span class="font-bold"><i class="fa-solid fa-camera"></i> Model:</span> { metadata.Model } </p>
+				<p class="mb-1"><span class="font-bold"><i class="fa-solid fa-sun"></i> Exposure Time: </span> { metadata.ExposureTime }</p>
+				<p class="mb-1"><span class="font-bold"><i class="fa-solid fa-volleyball"></i> Aperture: </span> { metadata.Aperture } </p>
+				<p class="mb-1"><span class="font-bold"><i class="fa-solid fa-atom"></i> ISO:</span> { metadata.ISO } </p>
+				<p class="mb-1"><span class="font-bold"><i class="fa-solid fa-ring"></i> Focal Length:</span> { metadata.FocalLength } </p>
+				<p class="mb-1"><span class="font-bold"><i class="fa-solid fa-camera-rotate"></i> Lens Model:</span> { metadata.LensModel } </p>
+			</div>
+		</div>
+		<script>
+			document.getElementById('infoIcon').addEventListener('click', () => {
+				document.getElementById('metadata').classList.toggle('hidden');
+				document.getElementById('infoIcon').classList.toggle('hidden');
+			});
+			document.getElementById('metadata').addEventListener('click', () => {
+				document.getElementById('metadata').classList.toggle('hidden');
+				document.getElementById('infoIcon').classList.toggle('hidden');
+			});
+		</script>
+	</div>
+}
